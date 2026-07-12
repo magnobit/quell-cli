@@ -1,0 +1,53 @@
+name: release
+
+# Builds and publishes binaries on every version tag (e.g. v0.1.0). This is
+# the only place that can actually build this repo end-to-end: it needs
+# read access to the private github.com/magnobit/quell module, via
+# QUELL_ACCESS_TOKEN (a GitHub PAT or deploy key with read access to
+# magnobit/quell, stored as a repo secret). External contributors building
+# a fork won't have that secret and can't produce a working binary — see
+# README.md.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      # Grants this job's `go build` read access to the private quell
+      # module over HTTPS, using a PAT scoped to magnobit/quell only.
+      - name: Configure access to private quell module
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.QUELL_ACCESS_TOKEN }}@github.com/magnobit/quell".insteadOf "https://github.com/magnobit/quell"
+        env:
+          GOPRIVATE: github.com/magnobit/quell
+
+      - name: Build
+        env:
+          GOPRIVATE: github.com/magnobit/quell
+        run: |
+          mkdir -p dist
+          for pair in "linux amd64" "linux arm64" "darwin amd64" "darwin arm64" "windows amd64"; do
+            set -- $pair
+            os=$1; arch=$2
+            ext=""
+            if [ "$os" = "windows" ]; then ext=".exe"; fi
+            out="dist/quell-${os}-${arch}${ext}"
+            echo "Building $out"
+            GOOS=$os GOARCH=$arch go build -o "$out" .
+          done
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
