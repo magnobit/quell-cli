@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/magnobit/quell/compile"
 	"github.com/spf13/cobra"
@@ -23,14 +24,19 @@ func newCompileCmd() *cobra.Command {
   quell compile --target cirq --no-optimize -o out.py bell.quell`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			src := readFile(args[0])
+			if !strings.HasSuffix(args[0], ".quell") {
+				return fmt.Errorf("expected a .quell file, got: %s", args[0])
+			}
 
 			finalOptimize := optimize
 			if noOptimize {
 				finalOptimize = false
 			}
 
-			result, err := compile.CompileWithWarnings(src, compile.Target(target), finalOptimize)
+			// CompileFile (not CompileWithWarnings on read content) so
+			// "import" lines resolve relative to this file's directory, or
+			// against an installed package.
+			result, err := compile.CompileFileWithWarnings(args[0], compile.Target(target), finalOptimize)
 			if err != nil {
 				return fmt.Errorf("compile error: %w", err)
 			}

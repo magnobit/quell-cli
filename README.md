@@ -13,6 +13,9 @@ Download the binary for your platform from [Releases](https://github.com/magnobi
 ```
 quell run <file.quell>                Run a circuit (local sim or a configured backend)
 quell compile <file.quell>            Compile to OpenQASM, Qiskit, Cirq, or Braket
+quell fmt <file.quell>                Format a Quell source file (--write to reformat in place, --check for CI)
+quell lsp                             Start the language server (LSP over stdio) — diagnostics + format-on-save
+quell pkg add/get/list                Manage packages (git repos, no hosted registry) — see quell pkg --help
 quell serve                           Start a local HTTP compile server
 quell ask "<question>"                AI assistant (needs ANTHROPIC_API_KEY)
 quell convert <file.py>               Convert Python/Qiskit code to Quell

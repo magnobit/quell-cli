@@ -35,8 +35,13 @@ for the full flag list.`,
   quell run bell.quell --backend ionq --ionq-api-key $KEY --set ionq.error_mitigation=true`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			src := readFile(args[0])
-			compiled, err := compile.CompileWithWarnings(src, compile.OpenQASM, true)
+			if !strings.HasSuffix(args[0], ".quell") {
+				return fmt.Errorf("expected a .quell file, got: %s", args[0])
+			}
+			// CompileFile (not CompileWithWarnings on read content) so
+			// "import" lines resolve relative to this file's directory, or
+			// against an installed package.
+			compiled, err := compile.CompileFileWithWarnings(args[0], compile.OpenQASM, true)
 			if err != nil {
 				return fmt.Errorf("parse/compile error: %w", err)
 			}
