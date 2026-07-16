@@ -10,6 +10,7 @@ import (
 
 	"github.com/magnobit/quell/compile"
 	"github.com/magnobit/quell/execute"
+	"github.com/magnobit/quell/simulate"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,7 @@ for the full flag list.`,
 			fmt.Printf("Qubits  : %d\n", compiled.NumQubits)
 			fmt.Printf("Gates   : %d\n\n", compiled.NumInstructions)
 
-			return runOnBackend(cfg, compiled)
+			return runOnBackend(cfg, compiled, args[0])
 		},
 	}
 
@@ -206,13 +207,18 @@ func applySetFlags(cfg *execute.Config, sets []string) error {
 	return nil
 }
 
-func runOnBackend(cfg *execute.Config, compiled compile.CompileResult) error {
+func runOnBackend(cfg *execute.Config, compiled compile.CompileResult, path string) error {
 	switch cfg.Backend {
 	case "local", "":
-		fmt.Println("--- OpenQASM 3 ---")
-		fmt.Println(compiled.Code)
-		fmt.Println("Tip: use QubitLabs playground for browser simulation →")
-		fmt.Println("     https://qubitlabs.magnobit.com")
+		shots := cfg.Local.Shots
+		if shots == 0 {
+			shots = 1000
+		}
+		result, err := simulate.RunFile(path, shots)
+		if err != nil {
+			return fmt.Errorf("simulate error: %w", err)
+		}
+		result.Print()
 		return nil
 
 	case "ibm":
