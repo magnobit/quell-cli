@@ -4,9 +4,15 @@ The command-line tool for [Quell](https://qubitlabs.magnobit.com) — a backend-
 
 ## Install
 
-Download the binary for your platform from [Releases](https://github.com/magnobit/quell-cli/releases) and put it on your `PATH`.
+With Go installed:
 
-> This repo builds against Magnobit's private Quell compiler/runtime, so `go build`/`go install` from a fresh clone won't work outside Magnobit's own CI — grab a prebuilt release binary instead. The CLI wrapper source here is public so you can read exactly what it does and how it talks to each provider before you hand it credentials.
+```sh
+go install github.com/magnobit/quell-cli@latest
+```
+
+Or download the binary for your platform from [Releases](https://github.com/magnobit/quell-cli/releases) and put it on your `PATH`.
+
+> Both `quell-cli` and the underlying `magnobit/quell` compiler/runtime it depends on are public, so a normal `go install`/`go build` from a fresh clone works with no special access — the CLI wrapper source here is readable end to end so you can see exactly what it does and how it talks to each provider before you hand it credentials.
 
 ## Usage
 
