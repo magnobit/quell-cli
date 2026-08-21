@@ -1,12 +1,11 @@
 name: release
 
-# Builds and publishes binaries on every version tag (e.g. v0.1.0). This is
-# the only place that can actually build this repo end-to-end: it needs
-# read access to the private github.com/magnobit/quell module, via
-# QUELL_ACCESS_TOKEN (a GitHub PAT or deploy key with read access to
-# magnobit/quell, stored as a repo secret). External contributors building
-# a fork won't have that secret and can't produce a working binary — see
-# README.md.
+# Builds and publishes binaries on every version tag (e.g. v0.1.0).
+# github.com/magnobit/quell is a public repo, so `go build` resolves it via
+# the normal public Go module proxy — no credentials or private-module
+# workaround needed here. (It was private earlier in this project; if it
+# ever goes private again, this job will need the GOPRIVATE + PAT dance
+# back — see git history for the previous version of this file.)
 
 on:
   push:
@@ -23,17 +22,7 @@ jobs:
         with:
           go-version: "1.25"
 
-      # Grants this job's `go build` read access to the private quell
-      # module over HTTPS, using a PAT scoped to magnobit/quell only.
-      - name: Configure access to private quell module
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.QUELL_ACCESS_TOKEN }}@github.com/magnobit/quell".insteadOf "https://github.com/magnobit/quell"
-        env:
-          GOPRIVATE: github.com/magnobit/quell
-
       - name: Build
-        env:
-          GOPRIVATE: github.com/magnobit/quell
         run: |
           mkdir -p dist
           for pair in "linux amd64" "linux arm64" "darwin amd64" "darwin arm64" "windows amd64"; do
