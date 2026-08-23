@@ -12,24 +12,30 @@ import (
 	"os"
 	"strings"
 
+	quelldocs "github.com/magnobit/quell"
+	"github.com/magnobit/quell/askdocs"
+	"github.com/magnobit/quell/convert"
+	"github.com/magnobit/quell/migrate"
 	"github.com/spf13/cobra"
 )
 
 func newAskCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "ask <question>",
-		Short:   "AI assistant for Quell and quantum computing (needs ANTHROPIC_API_KEY)",
+		Short:   "AI assistant for Quell and quantum computing (Claude when ANTHROPIC_API_KEY is set, local doc search otherwise)",
 		Example: `  quell ask "how does Grover's algorithm work?"`,
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			question := strings.Join(args, " ")
 			apiKey := os.Getenv("ANTHROPIC_API_KEY")
 			if apiKey == "" {
-				return fmt.Errorf("ANTHROPIC_API_KEY not set — run: export ANTHROPIC_API_KEY=your-key")
+				fmt.Println(askdocs.Answer(question, quelldocs.Docs()))
+				return nil
 			}
-			question := strings.Join(args, " ")
 			response, err := callClaude(apiKey, quellSystemPrompt(), question)
 			if err != nil {
-				return err
+				fmt.Println(askdocs.Answer(question, quelldocs.Docs()))
+				return nil
 			}
 			fmt.Println(response)
 			return nil
@@ -39,16 +45,45 @@ func newAskCmd() *cobra.Command {
 
 func newConvertCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "convert <file.py>",
-		Short:   "Convert Python/Qiskit code to Quell (needs ANTHROPIC_API_KEY)",
-		Example: `  quell convert my_qiskit_circuit.py`,
-		Args:    cobra.ExactArgs(1),
+		Use:   "convert <file.py|file.qasm|file.qs>",
+		Short: "Convert OpenQASM/Qiskit/Cirq/Q#/Braket to Quell",
+		Long: `Convert circuits into Quell.
+
+  • .qasm / .qasm2 / .qasm3 — OpenQASM → Quell
+  • .py — Qiskit/Cirq/Braket → Quell
+  • .qs — Q# → Quell
+
+All of the above convert locally — no API key, no network call. When the
+local converter can't fully handle a Python file, set ANTHROPIC_API_KEY for
+an LLM-assisted second pass (export ANTHROPIC_API_KEY=your-key).`,
+		Example: `  quell convert my_qiskit_circuit.py
+  quell convert bell.qasm`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			apiKey := os.Getenv("ANTHROPIC_API_KEY")
-			if apiKey == "" {
-				return fmt.Errorf("ANTHROPIC_API_KEY not set — run: export ANTHROPIC_API_KEY=your-key")
+			path := args[0]
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
 			}
-			src := readFile(args[0])
+			src := string(data)
+			lang := convert.DetectLanguage(src, path)
+
+			result, mErr := migrate.ToQuell(src, lang)
+			if mErr == nil && strings.TrimSpace(result.Quell) != "" {
+				fmt.Print(result.Quell)
+				for _, w := range result.Warnings {
+					fmt.Fprintf(os.Stderr, "warning: %s\n", w)
+				}
+				return nil
+			}
+
+			apiKey := os.Getenv("ANTHROPIC_API_KEY")
+			if apiKey == "" || !migrate.IsPythonish(lang, result.Language) {
+				if mErr != nil {
+					return mErr
+				}
+				return fmt.Errorf("conversion produced no Quell output")
+			}
 			prompt := fmt.Sprintf(`Convert the following Python quantum code to Quell language.
 
 Quell syntax: one gate per line, uppercase gate name, then qubit indices, then args.
