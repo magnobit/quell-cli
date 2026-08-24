@@ -1,11 +1,8 @@
 name: release
 
 # Builds and publishes binaries on every version tag (e.g. v0.1.0).
-# github.com/magnobit/quell is a public repo, so `go build` resolves it via
-# the normal public Go module proxy — no credentials or private-module
-# workaround needed here. (It was private earlier in this project; if it
-# ever goes private again, this job will need the GOPRIVATE + PAT dance
-# back — see git history for the previous version of this file.)
+# quell is public now, so this just needs go build — no credentials.
+# If it ever goes private again, see git history for the old GOPRIVATE setup.
 
 on:
   push:
