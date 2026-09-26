@@ -3,7 +3,7 @@ module github.com/magnobit/quell-cli
 go 1.25
 
 require (
-	github.com/magnobit/quell v1.1.4
+	github.com/magnobit/quell v1.1.5
 	github.com/spf13/cobra v1.10.2
 )
 
