@@ -13,7 +13,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.0.2"
+// version must match the release tag. The release workflow fails the build
+// when they disagree, because `go install ...@vX` cannot inject ldflags.
+const version = "0.0.6"
 
 func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
