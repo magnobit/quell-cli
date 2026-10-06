@@ -12,6 +12,11 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Without this the default token is read-only and the upload step fails
+    # with "Resource not accessible by integration", leaving the release
+    # published but empty (that is what happened to v0.0.4 and v0.0.5).
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
