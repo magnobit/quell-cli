@@ -19,6 +19,15 @@ jobs:
         with:
           go-version: "1.25"
 
+      - name: Check version constant matches tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          got=$(go run . version | awk '{print $2}')
+          if [ "$tag" != "$got" ]; then
+            echo "tag $GITHUB_REF_NAME reports version $got; update root.go" >&2
+            exit 1
+          fi
+
       - name: Build
         run: |
           mkdir -p dist
