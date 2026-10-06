@@ -18,7 +18,14 @@ Or download the binary for your platform from [Releases](https://github.com/magn
 
 ```
 quell run <file.quell>                Run a circuit (local sim or a configured backend)
-quell compile <file.quell>            Compile to OpenQASM, Qiskit, Cirq, or Braket
+quell simulate <file.quell>           Local statevector run (--shots, --noise)
+quell compile <file.quell>            Compile to OpenQASM, Qiskit, Cirq, Braket, or Q#
+quell inspect <file.quell>            Print AST summary, canonical IR, optimized IR, or QIR subset
+quell draw <file.quell>               ASCII circuit diagram
+quell state <file.quell>              Exact local statevector of the gates before MEASURE
+quell observe <file.quell>            Exact local expectation of an `observable`
+quell gradient <file.quell>           Central-difference gradient of that expectation
+quell vqe <file.quell>                Nelder-Mead minimisation of that expectation
 quell fmt <file.quell>                Format a Quell source file (--write to reformat in place, --check for CI)
 quell lsp                             Start the language server (LSP over stdio) — diagnostics + format-on-save
 quell pkg add/get/list                Manage packages (git repos, no hosted registry) — see quell pkg --help
@@ -26,6 +33,8 @@ quell serve                           Start a local HTTP compile server
 quell ask "<question>"                AI assistant (needs ANTHROPIC_API_KEY)
 quell convert <file.py>               Convert Python/Qiskit code to Quell
 ```
+
+`draw`, `state`, `observe`, `gradient`, and `vqe` run on the local statevector only (24-qubit cap). They do not contact a provider. `gradient` is a finite difference, not the parameter-shift rule. `inspect --kind qir` is a structural export, not qir-runner execution.
 
 ### Running on real hardware
 
